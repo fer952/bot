@@ -1,0 +1,398 @@
+[
+  {
+    "departamento": "Constancias",
+    "horario": "Lunes a Viernes de 8:30 a 16:00 hrs",
+    "tramites": [
+      {
+        "id": 1,
+        "nombre": "Solicitud de Inscripcion",
+        "requisitos": "1. CURP del o la menor\n2. Acta de Nacimiento\n3. Reportes de evaluación previos (si aplica)",
+        "link": "Puede presentar los documentos en las oficinas de la USAE o enviar los documentos al correo: inscrip_juventino@seg.guanajuato.gob.mx",
+        "formato": "Solic Inscripc ReinscripcTraslado y Baja.pdf",
+        "costo": "Gratuito"
+      },
+      {
+        "id": 2,
+        "nombre": "Constancias para Pasaporte",
+        "requisitos": "1. 1 Fotografía reciente infantil/pasaporte B/N mate.\n2. INE del tutor.",
+        "link": "Escanear por ambos lados y enviar a: inscrip_juventino@seg.guanajuato.gob.mx",
+        "formato": "TramiteConstanciaParaPasaporte.pdf",
+        "costo": "Gratuito"
+      },
+      {
+        "id": 3,
+        "nombre": "Constancias y certificados a nivel básico",
+        "requisitos": "Ingrese al Portal de Consulta de Evaluaciones para descargar sus constancias.",
+        "link": "https://trayectoriaeducativa.seg.guanajuato.gob.mx/index.aspx",
+        "formato": "InstructivoDesCertifBa.pdf",
+        "costo": "Gratuito"
+      }
+    ]
+  },
+  {
+    "departamento": "Planeacion y acreditacion",
+    "horario": "Lunes a Viernes de 8:30 a 16:00 hrs",
+    "tramites": [
+      {
+        "id": 4,
+        "nombre": "Solicitud de Inscripción Anticipada",
+        "requisitos": "Ingresa al siguiente link:",
+        "link": "https://www.seg.guanajuato.gob.mx/sia/SitePages/Inicio.aspx",
+        "formato": null,
+        "costo": "Gratuito"
+      },
+      {
+        "id": 5,
+        "nombre": "Solicitud de cambio de escuela",
+        "requisitos": "Ingresa al siguiente link:",
+        "link": "https://inscripciones.seg.guanajuato.gob.mx/Account/Login",
+        "formato": null,
+        "costo": "Gratuito"
+      },
+      {
+        "id": 6,
+        "nombre": "Portal de calificaciones",
+        "requisitos": "Ingresa al siguiente link:",
+        "link": "https://trazabilidadeducativa.seg.guanajuato.gob.mx/trazabilidad.index",
+        "formato": null,
+        "costo": "Gratuito"
+      },
+      {
+        "id": 7,
+        "nombre": "Trámites de constancias para alumnos en línea de la SEG",
+        "requisitos": "Ingresa al siguiente link:",
+        "link": "https://www.seg.guanajuato.gob.mx/TramitesSEG/SitePages/Estudiantes.aspx",
+        "formato": null,
+        "costo": "Gratuito"
+      },
+      {
+        "id": 8,
+        "nombre": "Agendar cita",
+        "requisitos": "Ingresa al siguiente formulario para agendar cita:",
+        "link": "https://forms.gle/ejemplo",
+        "formato": null,
+        "costo": "Gratuito"
+      }
+    ]
+  },
+  {
+    "departamento": "Servicios al personal",
+    "horario": "Lunes a Viernes de 8:30 a 16:00 hrs",
+    "tramites": [
+      {
+        "id": 9,
+        "nombre": "Solicitud de Credencial Institucional",
+        "requisitos": "A continuación el formato:",
+        "link": null,
+        "formato": "SolicitudTramite de Credencial Institucional.pdf",
+        "costo": "Gratuito"
+      },
+      {
+        "id": 10,
+        "nombre": "Solicitud Cita Red Medica",
+        "requisitos": "A continuación el formato:",
+        "link": null,
+        "formato": "DSS-SCRM_CitaRedMedica.pdf",
+        "costo": "Gratuito"
+      },
+      {
+        "id": 11,
+        "nombre": "Solicitud de Inscripciòn de Ahorro Solidario AB",
+        "requisitos": "A continuación el formato:",
+        "link": null,
+        "formato": "DSS-IAS_InscripcionAhorroSolidario.pdf",
+        "costo": "Gratuito"
+      },
+      {
+        "id": 12,
+        "nombre": "Solicitud de Liquidaciòn Forte Federal Por Defunciòn",
+        "requisitos": "A continuación el formato:",
+        "link": null,
+        "formato": "DSS-FLFF_Liquidación del Forte Federal por Defuncion.pdf",
+        "costo": "Gratuito"
+      },
+      {
+        "id": 13,
+        "nombre": "Solicitud de Informe de Existencia de Designacion de Beneficiarios",
+        "requisitos": "A continuación el formato:",
+        "link": null,
+        "formato": "DSS-DPYS-SIEDB_InformeExisteniaDesignacionBeneficiarios.pdf",
+        "costo": "Gratuito"
+      },
+      {
+        "id": 14,
+        "nombre": "Solicitud de Desgloce de Licencias Medicas",
+        "requisitos": "A continuación el formato:",
+        "link": null,
+        "formato": "DSS-DLM_DesgloseLicenciasMedicas.pdf",
+        "costo": "Gratuito"
+      },
+      {
+        "id": 15,
+        "nombre": "Solicitud de Reexpedicion de Liquidacion de Forte Federal por Defuncion",
+        "requisitos": "A continuación el formato:",
+        "link": null,
+        "formato": "DRRI-SRSFFD_SolicitudReexpedicionForteFederalDefuncion.pdf",
+        "costo": "Gratuito"
+      },
+      {
+        "id": 16,
+        "nombre": "Solicitud de Reexpedicion de Liquidaciòn del Forte Estatal",
+        "requisitos": "A continuación el formato:",
+        "link": null,
+        "formato": "DRRI-SLSFED_SolicitudLiquidacionSaldoForteEstatalDefuncion.pdf",
+        "costo": "Gratuito"
+      },
+      {
+        "id": 17,
+        "nombre": "Solicitud de Liquidaciòn de Forte Estatal por Defunciòn",
+        "requisitos": "A continuación el formato:",
+        "link": null,
+        "formato": "DRRI-SRPFE_SolicitudReexpedicionPagoForteEstatal.pdf",
+        "costo": "Gratuito"
+      },
+      {
+        "id": 18,
+        "nombre": "Cedula de Incorporaciòn al FORTE Estatal",
+        "requisitos": "A continuación el formato:",
+        "link": null,
+        "formato": "DRRI-CIFE_CedulaInscripcionForteEstatal.pdf",
+        "costo": "Gratuito"
+      },
+      {
+        "id": 19,
+        "nombre": "Aclaracion FORTE",
+        "requisitos": "A continuación el formato:",
+        "link": null,
+        "formato": "DRRI-AF_AclaracionForte.pdf",
+        "costo": "Gratuito"
+      },
+      {
+        "id": 20,
+        "nombre": "Solicitud de Apoyo para Gastos Funerarios",
+        "requisitos": "A continuación el formato:",
+        "link": null,
+        "formato": "DPS-SPM_SolicitudGastosFunerarios.pdf",
+        "costo": "Gratuito"
+      },
+      {
+        "id": 21,
+        "nombre": "Solicitud de Pago por Acreditacion de Maestrìa y Doctorado",
+        "requisitos": "A continuación el formato:",
+        "link": null,
+        "formato": "DPS-SPAMYD_PagoAcreditacionMaestriaDoctorado.pdf",
+        "costo": "Gratuito"
+      },
+      {
+        "id": 22,
+        "nombre": "Solicitud de Pago por Acreditaciòn de Licenciuatura",
+        "requisitos": "A continuación el formato:",
+        "link": null,
+        "formato": "DPS-SPAL_PagoAcreditacionLicenciatura.pdf",
+        "costo": "Gratuito"
+      },
+      {
+        "id": 23,
+        "nombre": "Solicitud de Finiquito",
+        "requisitos": "A continuación el formato:",
+        "link": null,
+        "formato": "DPS-SF_SolicitudFiniquito.pdf",
+        "costo": "Gratuito"
+      },
+      {
+        "id": 24,
+        "nombre": "Solicitud de Designaciòn de Beneficiarios",
+        "requisitos": "A continuación el formato:",
+        "link": null,
+        "formato": "DPS-SDB_DesignacionBeneficiarios.pdf",
+        "costo": "Gratuito"
+      },
+      {
+        "id": 25,
+        "nombre": "Solicitud de Becas al personal de confianza",
+        "requisitos": "A continuación el formato:",
+        "link": null,
+        "formato": "DPS-SB_BecaConfianza.pdf",
+        "costo": "Gratuito"
+      },
+      {
+        "id": 26,
+        "nombre": "Solicitud de Aclaraciòn de Pago o Descuento",
+        "requisitos": "A continuación el formato:",
+        "link": null,
+        "formato": "DPS-SAPD_ AclaracionPagoDescuento.pdf",
+        "costo": "Gratuito"
+      },
+      {
+        "id": 27,
+        "nombre": "Solicitud de Apoyo de Lentes",
+        "requisitos": "A continuación el formato:",
+        "link": null,
+        "formato": "DPS-SAL_ApoyoLentes.pdf",
+        "costo": "Gratuito"
+      },
+      {
+        "id": 28,
+        "nombre": "Solicitud de Apoyo para impresiòn de Tesis",
+        "requisitos": "A continuación el formato:",
+        "link": null,
+        "formato": "DPS-SAIT_AyudaImpresionTesis.pdf",
+        "costo": "Gratuito"
+      },
+      {
+        "id": 29,
+        "nombre": "Solicitud de Apoyo de Aparatos Ortopedicos",
+        "requisitos": "A continuación el formato para su descarga:",
+        "link": null,
+        "formato": "DPS-SAAO_AyudaAparatosOrtopedicos.pdf",
+        "costo": "Gratuito"
+      },
+      {
+        "id": 30,
+        "nombre": "Solicitud de Constancias de NO Finiquito",
+        "requisitos": "A continuación el formato para su descarga:",
+        "link": null,
+        "formato": "DPS_Solicitud de NO Finiquito .pdf",
+        "costo": "Gratuito"
+      },
+      {
+        "id": 31,
+        "nombre": "Tramite de Credenciales",
+        "requisitos": "1. REF del Empleado\n2. Número del empleado",
+        "link": "https://www.seg.guanajuato.gob.mx/TramitesSEG/Documents/Se/Manualcredencial.pdf",
+        "formato": "Tramite de Credencial Institucional.pdf",
+        "costo": "Gratuito"
+      },
+      {
+        "id": 32,
+        "nombre": "Tramite Constancias de Servicio",
+        "requisitos": "1. REF del Empleado",
+        "link": "https://www.seg.guanajuato.gob.mx/TramitesSEG/Documents/Se/Manualcredencial.pdf",
+        "formato": null,
+        "costo": "Gratuito"
+      },
+      {
+        "id": 33,
+        "nombre": "Tramite de Cotejos",
+        "requisitos": "1. Acta de Nacimiento\n2. Documento de Último Grado de Estudios",
+        "link": null,
+        "formato": null,
+        "costo": "Gratuito"
+      },
+      {
+        "id": 34,
+        "nombre": "Lista de Tramites y Servicios en linea SEG",
+        "requisitos": "Ingresa al siguiente enlace para consultar:",
+        "link": "https://san.seg.guanajuato.gob.mx/TramitesYServicios/ListaTramites",
+        "formato": null,
+        "costo": "Gratuito"
+      },
+      {
+        "id": 35,
+        "nombre": "Agendar cita",
+        "requisitos": "Ingresa al siguiente formulario para agendar cita:",
+        "link": "https://forms.gle/ejemplo",
+        "formato": null,
+        "costo": "Gratuito"
+      }  
+    ]
+  },
+  {
+    "departamento": "Eficiencia administrativa",
+    "horario": "Lunes a Viernes de 8:30 a 16:00 hrs",
+    "tramites": [
+      {
+        "id": 36,
+        "nombre": "Sistema de Inventarios",
+        "requisitos": "Ingresa al siguiente link:",
+        "link": "https://login.microsoftonline.com/...",
+        "formato": null,
+        "costo": "Gratuito"
+      },
+      {
+        "id": 37,
+        "nombre": "Siniestros",
+        "requisitos": "Ingresa al siguiente link:",
+        "link": "https://san.seg.guanajuato.gob.mx/TramitesYServicios/ListaTramites",
+        "formato": null,
+        "costo": "Gratuito"
+      },
+      {
+        "id": 38,
+        "nombre": "Tiendas Escolares",
+        "requisitos": "Ingresa al siguiente link para obtener el formato:",
+        "link": "https://san.seg.guanajuato.gob.mx/TramitesYServicios/ListaTramites",
+        "formato": null,
+        "costo": "Gratuito"
+      },
+      {
+        "id": 39,
+        "nombre": "Agendar cita",
+        "requisitos": "Ingresa al siguiente formulario para agendar cita:",
+        "link": "https://forms.gle/ejemplo",
+        "formato": null,
+        "costo": "Gratuito"
+      }
+    ]
+  },
+  {
+    "departamento": "Sistemas",
+    "horario": "Lunes a Viernes de 8:30 a 16:00 hrs",
+    "tramites": [
+      {
+        "id": 40,
+        "nombre": "Solicitud de Servicios TIGO (Mantenimiento de Equipos a Escuelas)",
+        "requisitos": "Ingresa al siguiente link para llenar el formulario de solicitud:",
+        "link": "https://forms.cloud.microsoft/Pages/ResponsePage.aspx?id=...",
+        "formato": null,
+        "costo": "Gratuito"
+      },
+      {
+        "id": 41,
+        "nombre": "Solicitud de correo CT a docentes particulares",
+        "requisitos": "Ingresa al siguiente link:",
+        "link": "https://forms.cloud.microsoft/Pages/ResponsePage.aspx?id=...",
+        "formato": null,
+        "costo": "Gratuito"
+      },
+      {
+        "id": 42,
+        "nombre": "Solicitud de cuenta institucional SEG docentes",
+        "requisitos": "Ingresa al siguiente link:",
+        "link": "https://docs.google.com/forms/d/e/1FAIpQLSdPV...",
+        "formato": null,
+        "costo": "Gratuito"
+      },
+      {
+        "id": 43,
+        "nombre": "Informacion Cuentas Educativas",
+        "requisitos": "Ingresa al siguiente link para obtener el formato donde podrás consultar diferentes acciones:",
+        "link": "https://www.seg.guanajuato.gob.mx/CuentasEducativas/SitePages/Inicio.aspx",
+        "formato": null,
+        "costo": "Gratuito"
+      },
+      {
+        "id": 44,
+        "nombre": "Agendar cita",
+        "requisitos": "Ingresa al siguiente formulario para agendar cita:",
+        "link": "https://forms.gle/ejemplo",
+        "formato": null,
+        "costo": "Gratuito"
+      }
+    ]
+  },
+  {
+    "departamento": "Jefatura de la Unidad",
+    "horario": "Lunes a Viernes de 8:30 a 16:00 hrs",
+    "tramites": [
+      {
+        "id": 45,
+        "nombre": "Jefatura de la unidad",
+        "requisitos": "Ingresa al siguiente link para agendar cita:",
+        "link": "https://forms.gle/ejemplo",
+        "formato": null,
+        "costo": null
+      }
+    ]
+  }
+]
