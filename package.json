@@ -16,6 +16,7 @@
     "express": "^5.3.0",
     "from": "^0.1.7",
     "source": "^0.0.3",
+    "sqlite": "^5.1.1",
     "sqlite3": "^6.0.1"
   },
   "keywords": [],
