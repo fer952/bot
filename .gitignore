@@ -1,9 +1,9 @@
-# Variables de entorno (NO subir)
+# Variables de entorno 
 .env
 .env.*
 !.env.example
 
-# Dependencias (NO subir)
+# Dependencias 
 node_modules/
 
 # Archivos de compilación
