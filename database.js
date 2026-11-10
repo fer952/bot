@@ -1,34 +1,16 @@
-// importamos la libreria sqlite3 en su version con promesas
-const sqlite3 = require('sqlite3');
-const { open } = require('sqlite');
+// usa el modulo sqlite integrado en Node.js (sin paquetes nativos ni Python)
+const { DatabaseSync } = require('node:sqlite');
 const fs = require('fs');
 
-// funcion principal asincrona para configurar la base de datos
-async function configurardatabase() {
-    // abrimos o creamos el archivo de la base de datos local
-    const db = await open({
-        filename: './usae_bot.db',
-        driver: sqlite3.Database
-    });
-
-    // eliminamos las tablas anteriores si es que ya existian para crearlas limpias
-    await db.exec(`
-        DROP TABLE IF EXISTS tramites;
-        DROP TABLE IF EXISTS departamentos;
-    `);
-
-    // creamos la tabla de departamentos
-    await db.exec(`
-        CREATE TABLE departamentos (
+function asegurarEsquema(db) {
+    db.exec(`
+        CREATE TABLE IF NOT EXISTS departamentos (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             nombre TEXT NOT NULL,
             horario TEXT
         );
-    `);
 
-    // creamos la tabla de tramites vinculada a departamentos
-    await db.exec(`
-        CREATE TABLE tramites (
+        CREATE TABLE IF NOT EXISTS tramites (
             id INTEGER PRIMARY KEY,
             departamento_id INTEGER,
             nombre TEXT NOT NULL,
@@ -38,32 +20,92 @@ async function configurardatabase() {
             costo TEXT,
             FOREIGN KEY (departamento_id) REFERENCES departamentos(id)
         );
+
+        CREATE TABLE IF NOT EXISTS configuracion (
+            id INTEGER PRIMARY KEY CHECK (id = 1),
+            whatsapp_token TEXT NOT NULL DEFAULT '',
+            phone_number_id TEXT NOT NULL DEFAULT '',
+            verify_token TEXT NOT NULL DEFAULT '',
+            api_version TEXT NOT NULL DEFAULT 'v26.0',
+            puerto INTEGER NOT NULL DEFAULT 3000,
+            public_url TEXT NOT NULL DEFAULT '',
+            actualizado_en TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+        );
+
+        CREATE TABLE IF NOT EXISTS mensajes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            telefono TEXT NOT NULL,
+            rol TEXT NOT NULL,
+            texto TEXT NOT NULL,
+            origen TEXT NOT NULL DEFAULT 'whatsapp',
+            creado_en TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_mensajes_telefono ON mensajes(telefono);
+        CREATE INDEX IF NOT EXISTS idx_mensajes_creado ON mensajes(creado_en);
     `);
 
-    // leemos el contenido del archivo json con los tramites
+    // migracion suave si la BD ya existia sin public_url
+    try {
+        db.exec(`ALTER TABLE configuracion ADD COLUMN public_url TEXT NOT NULL DEFAULT ''`);
+    } catch (_) {
+        // la columna ya existe
+    }
+
+    const existe = db.prepare('SELECT id FROM configuracion WHERE id = 1').get();
+    if (!existe) {
+        db.prepare(`
+            INSERT INTO configuracion (id, whatsapp_token, phone_number_id, verify_token, api_version, puerto, public_url)
+            VALUES (1, '', '', 'usae_verify_token', 'v26.0', 3000, '')
+        `).run();
+    }
+}
+
+function cargarTramites(db) {
+    db.exec(`
+        DELETE FROM tramites;
+        DELETE FROM departamentos;
+    `);
+
     const datocrudo = fs.readFileSync('./tramites.json');
     const datosdepartamentos = JSON.parse(datocrudo);
 
-    // recorremos cada departamento del json para insertarlo en sqlite
-    for (const depto of datosdepartamentos) {
-        const resultado = await db.run(
-            'INSERT INTO departamentos (nombre, horario) VALUES (?, ?)',
-            [depto.departamento, depto.horario]
-        );
-        const deptoid = resultado.lastID;
+    const insertDepto = db.prepare(
+        'INSERT INTO departamentos (nombre, horario) VALUES (?, ?)'
+    );
+    const insertTramite = db.prepare(
+        'INSERT INTO tramites (id, departamento_id, nombre, requisitos, link, formato, costo) VALUES (?, ?, ?, ?, ?, ?, ?)'
+    );
 
-        // recorremos cada tramite dentro del departamento e insertamos
+    for (const depto of datosdepartamentos) {
+        const resultado = insertDepto.run(depto.departamento, depto.horario);
+        const deptoid = Number(resultado.lastInsertRowid);
+
         for (const t of depto.tramites) {
-            await db.run(
-                'INSERT INTO tramites (id, departamento_id, nombre, requisitos, link, formato, costo) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                [t.id, deptoid, t.nombre, t.requisitos, t.link, t.formato, t.costo]
+            insertTramite.run(
+                t.id,
+                deptoid,
+                t.nombre,
+                t.requisitos,
+                t.link,
+                t.formato,
+                t.costo
             );
         }
     }
-
-    console.log('base de datos sqlite (usae_bot.db) creada e inicializada correctamente.');
-    await db.close();
 }
 
-// ejecutamos la funcion de configuracion
-configurardatabase();
+function configurardatabase() {
+    const db = new DatabaseSync('./usae_bot.db');
+    asegurarEsquema(db);
+    cargarTramites(db);
+    console.log('base de datos sqlite (usae_bot.db) creada e inicializada correctamente.');
+    console.log('tablas listas: departamentos, tramites, configuracion, mensajes');
+    db.close();
+}
+
+if (require.main === module) {
+    configurardatabase();
+}
+
+module.exports = { asegurarEsquema, cargarTramites, configurardatabase };
