@@ -3,7 +3,7 @@ require('dotenv').config();
 const path = require('path');
 const express = require('express');
 const axios = require('axios');
-const { DatabaseSync } = require('node:sqlite');
+const { abrirDatabase } = require('./db');
 const { asegurarEsquema } = require('./database');
 
 const app = express();
@@ -11,12 +11,6 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 let db;
-
-function iniciardb() {
-    db = new DatabaseSync('./usae_bot.db');
-    asegurarEsquema(db);
-    console.log('conectado a la base de datos sqlite exitosamente');
-}
 
 function obtenerConfig() {
     const fila = db.prepare('SELECT * FROM configuracion WHERE id = 1').get() || {};
@@ -128,8 +122,6 @@ async function enviarmensajewhatsapp(destinatario, texto) {
     }
 }
 
-iniciardb();
-
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
@@ -231,7 +223,6 @@ app.post('/api/conversaciones/:telefono/responder', async (req, res) => {
         return res.status(400).json({ error: 'telefono y texto son obligatorios' });
     }
 
-    // conversacion del simulador local: solo se guarda en BD
     if (telefono === 'demo-local') {
         guardarMensaje(telefono, 'bot', texto, 'panel');
         return res.json({ ok: true, enviado: false, origen: 'panel' });
@@ -389,14 +380,25 @@ app.post('/api-simular', (req, res) => {
     res.json({ respuesta });
 });
 
-const cfgInicial = obtenerConfig();
-const puerto = cfgInicial.puerto || 3000;
+async function main() {
+    db = await abrirDatabase();
+    asegurarEsquema(db);
+    console.log('conectado a la base de datos sqlite exitosamente');
 
-app.listen(puerto, () => {
-    console.log(`servidor corriendo en http://localhost:${puerto}`);
-    console.log(`panel de configuración: http://localhost:${puerto}/`);
-    console.log(`simulador: http://localhost:${puerto}/demo`);
-    if (!configLista(cfgInicial)) {
-        console.log('aviso: configura el token permanente desde el panel web');
-    }
+    const cfgInicial = obtenerConfig();
+    const puerto = cfgInicial.puerto || 3000;
+
+    app.listen(puerto, () => {
+        console.log(`servidor corriendo en http://localhost:${puerto}`);
+        console.log(`panel de configuración: http://localhost:${puerto}/`);
+        console.log(`simulador: http://localhost:${puerto}/demo`);
+        if (!configLista(cfgInicial)) {
+            console.log('aviso: configura el token permanente desde el panel web');
+        }
+    });
+}
+
+main().catch((error) => {
+    console.error('No se pudo iniciar el bot:', error);
+    process.exit(1);
 });

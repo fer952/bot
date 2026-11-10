@@ -1,6 +1,6 @@
-// usa el modulo sqlite integrado en Node.js (sin paquetes nativos ni Python)
-const { DatabaseSync } = require('node:sqlite');
+// SQLite en JavaScript puro (sql.js) — funciona sin Node 22 y sin Python
 const fs = require('fs');
+const { abrirDatabase } = require('./db');
 
 function asegurarEsquema(db) {
     db.exec(`
@@ -45,7 +45,6 @@ function asegurarEsquema(db) {
         CREATE INDEX IF NOT EXISTS idx_mensajes_creado ON mensajes(creado_en);
     `);
 
-    // migracion suave si la BD ya existia sin public_url
     try {
         db.exec(`ALTER TABLE configuracion ADD COLUMN public_url TEXT NOT NULL DEFAULT ''`);
     } catch (_) {
@@ -95,8 +94,8 @@ function cargarTramites(db) {
     }
 }
 
-function configurardatabase() {
-    const db = new DatabaseSync('./usae_bot.db');
+async function configurardatabase() {
+    const db = await abrirDatabase();
     asegurarEsquema(db);
     cargarTramites(db);
     console.log('base de datos sqlite (usae_bot.db) creada e inicializada correctamente.');
@@ -105,7 +104,10 @@ function configurardatabase() {
 }
 
 if (require.main === module) {
-    configurardatabase();
+    configurardatabase().catch((error) => {
+        console.error(error);
+        process.exit(1);
+    });
 }
 
 module.exports = { asegurarEsquema, cargarTramites, configurardatabase };
