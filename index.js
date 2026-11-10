@@ -1,126 +1,285 @@
-// carga las variables de entorno desde el archivo .env
 require('dotenv').config();
 
-// importa el framework express para levantar el servidor local
+const path = require('path');
 const express = require('express');
-
-// importa axios para realizar peticiones http hacia la api de meta
 const axios = require('axios');
+const { DatabaseSync } = require('node:sqlite');
+const { asegurarEsquema } = require('./database');
 
-// importa sqlite3 para manejar la base de datos relacional
-const sqlite3 = require('sqlite3');
-const { open } = require('sqlite');
-
-// inicializa la aplicacion de express
 const app = express();
-
-// configura express para que entienda formato json en las peticiones entrantes
 app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
 
-// variable global para la conexion a la base de datos
 let db;
 
-// funcion asincrona para conectar con la base de datos sqlite al iniciar
-async function iniciardb() {
-    db = await open({
-        filename: './usae_bot.db',
-        driver: sqlite3.Database
-    });
+function iniciardb() {
+    db = new DatabaseSync('./usae_bot.db');
+    asegurarEsquema(db);
     console.log('conectado a la base de datos sqlite exitosamente');
 }
 
-// ejecuta la conexion a la base de datos
+function obtenerConfig() {
+    const fila = db.prepare('SELECT * FROM configuracion WHERE id = 1').get() || {};
+    const publicUrl = (fila.public_url || process.env.PUBLIC_URL || '').replace(/\/$/, '');
+    return {
+        whatsapp_token: fila.whatsapp_token || process.env.WHATSAPP_TOKEN || '',
+        phone_number_id: fila.phone_number_id || process.env.PHONE_NUMBER_ID || '',
+        verify_token: fila.verify_token || process.env.VERIFY_TOKEN || '',
+        api_version: fila.api_version || process.env.API_VERSION || 'v26.0',
+        puerto: Number(fila.puerto || process.env.PORT || 3000),
+        public_url: publicUrl,
+        webhook_url: publicUrl ? `${publicUrl}/webhook` : '',
+        actualizado_en: fila.actualizado_en || null
+    };
+}
+
+function configLista(cfg) {
+    return Boolean(cfg.whatsapp_token && cfg.phone_number_id && cfg.verify_token);
+}
+
+function guardarMensaje(telefono, rol, texto, origen = 'whatsapp') {
+    db.prepare(`
+        INSERT INTO mensajes (telefono, rol, texto, origen)
+        VALUES (?, ?, ?, ?)
+    `).run(String(telefono), rol, texto, origen);
+}
+
+function generarRespuesta(texto) {
+    const idbuscado = parseInt(texto, 10);
+
+    if (!isNaN(idbuscado)) {
+        const tramite = db.prepare(`
+            SELECT t.*, d.nombre AS departamento, d.horario
+            FROM tramites t
+            JOIN departamentos d ON t.departamento_id = d.id
+            WHERE t.id = ?
+        `).get(idbuscado);
+
+        if (tramite) {
+            let respuesta =
+                `📋 *${tramite.nombre}*\n\n` +
+                `🏢 *departamento:* ${tramite.departamento}\n` +
+                `📌 *requisitos:*\n${tramite.requisitos}\n\n`;
+
+            if (tramite.link) respuesta += `🔗 *enlace:* ${tramite.link}\n`;
+            if (tramite.formato) respuesta += `📄 *formato:* ${tramite.formato}\n`;
+            respuesta +=
+                `💵 *costo:* ${tramite.costo}\n` +
+                `🕒 *horario:* ${tramite.horario}`;
+            return respuesta;
+        }
+
+        return `⚠️ no se encontro ningun tramite con el id *${idbuscado}*. por favor verifica e intenta de nuevo.`;
+    }
+
+    const normalizado = texto.toLowerCase();
+    if (normalizado === 'menu' || normalizado === 'menú') {
+        const deptos = db.prepare('SELECT * FROM departamentos').all();
+        let respuesta = 'departamentos disponibles usae-jr:\n\n';
+
+        for (const d of deptos) {
+            respuesta += `${d.nombre}\n`;
+            const tramitesdepto = db.prepare(
+                'SELECT id, nombre FROM tramites WHERE departamento_id = ?'
+            ).all(d.id);
+            for (const t of tramitesdepto) {
+                respuesta += `  └ [${t.id}] ${t.nombre}\n`;
+            }
+            respuesta += '\n';
+        }
+
+        respuesta += 'responde con el numero (id) del tramite que deseas consultar.';
+        return respuesta;
+    }
+
+    return (
+        '¡Hola! Bienvenido al sistema de consultas automatizado de la USAE Juventino Rosas.\n\n' +
+        'Para comenzar y ver la lista completa de trámites disponibles por departamentos, escribe la palabra MENU.'
+    );
+}
+
+async function enviarmensajewhatsapp(destinatario, texto) {
+    const cfg = obtenerConfig();
+    if (!configLista(cfg)) {
+        console.error('Falta configurar token / phone number id / verify token en el panel.');
+        return false;
+    }
+
+    try {
+        await axios.post(
+            `https://graph.facebook.com/${cfg.api_version}/${cfg.phone_number_id}/messages`,
+            {
+                messaging_product: 'whatsapp',
+                to: destinatario,
+                type: 'text',
+                text: { body: texto }
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${cfg.whatsapp_token}`,
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+        return true;
+    } catch (error) {
+        console.error('Error al enviar mensaje con Axios:', error.response?.data || error.message);
+        return false;
+    }
+}
+
 iniciardb();
 
-// endpoint tipo get para la verificacion del webhook requerida por meta
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
+app.get('/api/config', (req, res) => {
+    const cfg = obtenerConfig();
+    res.json({
+        ...cfg,
+        configurada: configLista(cfg),
+        webhook_listo: Boolean(cfg.verify_token && cfg.webhook_url)
+    });
+});
+
+app.put('/api/config', (req, res) => {
+    const actual = obtenerConfig();
+    const {
+        whatsapp_token = actual.whatsapp_token,
+        phone_number_id = actual.phone_number_id,
+        verify_token = actual.verify_token,
+        api_version = actual.api_version,
+        puerto = actual.puerto,
+        public_url = actual.public_url
+    } = req.body || {};
+
+    if (!String(verify_token).trim()) {
+        return res.status(400).json({ error: 'verify_token es obligatorio' });
+    }
+
+    const puertoNum = Number(puerto);
+    if (!Number.isInteger(puertoNum) || puertoNum < 1 || puertoNum > 65535) {
+        return res.status(400).json({ error: 'puerto inválido' });
+    }
+
+    db.prepare(`
+        UPDATE configuracion
+        SET whatsapp_token = ?,
+            phone_number_id = ?,
+            verify_token = ?,
+            api_version = ?,
+            puerto = ?,
+            public_url = ?,
+            actualizado_en = datetime('now','localtime')
+        WHERE id = 1
+    `).run(
+        String(whatsapp_token || '').trim(),
+        String(phone_number_id || '').trim(),
+        String(verify_token).trim(),
+        String(api_version || 'v26.0').trim(),
+        puertoNum,
+        String(public_url || '').trim().replace(/\/$/, '')
+    );
+
+    const cfg = obtenerConfig();
+    res.json({
+        ok: true,
+        ...cfg,
+        configurada: configLista(cfg),
+        webhook_listo: Boolean(cfg.verify_token && cfg.webhook_url)
+    });
+});
+
+app.get('/api/conversaciones', (req, res) => {
+    const filas = db.prepare(`
+        SELECT m.telefono,
+               m.texto AS ultimo_texto,
+               m.rol AS ultimo_rol,
+               m.creado_en AS ultima_fecha,
+               (
+                 SELECT COUNT(*) FROM mensajes x WHERE x.telefono = m.telefono
+               ) AS total
+        FROM mensajes m
+        INNER JOIN (
+            SELECT telefono, MAX(id) AS max_id
+            FROM mensajes
+            GROUP BY telefono
+        ) u ON u.max_id = m.id
+        ORDER BY m.id DESC
+    `).all();
+
+    res.json(filas);
+});
+
+app.get('/api/conversaciones/:telefono', (req, res) => {
+    const mensajes = db.prepare(`
+        SELECT id, telefono, rol, texto, origen, creado_en
+        FROM mensajes
+        WHERE telefono = ?
+        ORDER BY id ASC
+    `).all(req.params.telefono);
+
+    res.json(mensajes);
+});
+
+app.post('/api/conversaciones/:telefono/responder', async (req, res) => {
+    const telefono = String(req.params.telefono || '').trim();
+    const texto = String(req.body?.texto || '').trim();
+
+    if (!telefono || !texto) {
+        return res.status(400).json({ error: 'telefono y texto son obligatorios' });
+    }
+
+    // conversacion del simulador local: solo se guarda en BD
+    if (telefono === 'demo-local') {
+        guardarMensaje(telefono, 'bot', texto, 'panel');
+        return res.json({ ok: true, enviado: false, origen: 'panel' });
+    }
+
+    const enviado = await enviarmensajewhatsapp(telefono, texto);
+    if (!enviado) {
+        return res.status(502).json({
+            error: 'No se pudo enviar por WhatsApp. Revisa token y Phone Number ID.'
+        });
+    }
+
+    guardarMensaje(telefono, 'bot', texto, 'panel');
+    res.json({ ok: true, enviado: true, origen: 'panel' });
+});
+
 app.get('/webhook', (req, res) => {
     const modo = req.query['hub.mode'];
     const token = req.query['hub.verify_token'];
     const reto = req.query['hub.challenge'];
+    const cfg = obtenerConfig();
 
-    // validamos que el modo sea subscribe y el token coincida con el entorno
-    if (modo === 'subscribe' && token === process.env.VERIFY_TOKEN) {
+    if (modo === 'subscribe' && token === cfg.verify_token) {
         res.status(200).send(reto);
     } else {
         res.sendStatus(403);
     }
 });
 
-//endpoint tipo post para recibir los mensajes enviados por los usuarios
 app.post('/webhook', async (req, res) => {
     const cuerpo = req.body;
 
-    // validamos que la peticion provenga de una cuenta de whatsapp business
     if (cuerpo.object === 'whatsapp_business_account') {
         const entrada = cuerpo.entry?.[0];
         const cambios = entrada?.changes?.[0];
         const valor = cambios?.value;
         const mensaje = valor?.messages?.[0];
 
-        //si el verifica si recibido es de tipo texto
         if (mensaje && mensaje.type === 'text') {
-            const remitente = mensaje.from; 
+            const remitente = mensaje.from;
             const texto = mensaje.text.body.trim();
-            let respuesta = "";
 
-            // intenta convertir el texto del usuario en un numero entero (id de tramite)
-            const idbuscado = parseInt(texto);
-
-            // si el usuario escribio un numero valido
-            if (!isNaN(idbuscado)) {
-                // consultamos el tramite y su departamento correspondiente en sqlite usando join
-                const tramite = await db.get(`
-                    SELECT t.*, d.nombre AS departamento, d.horario 
-                    FROM tramites t 
-                    JOIN departamentos d ON t.departamento_id = d.id 
-                    WHERE t.id = ?
-                `, [idbuscado]);
-
-                // si encontramos el tramite construimos la respuesta detallada
-                if (tramite) {
-                    respuesta = `📋 *${tramite.nombre}*\n\n` +
-                                `🏢 *departamento:* ${tramite.departamento}\n` +
-                                `📌 *requisitos:*\n${tramite.requisitos}\n\n`;
-
-                    if (tramite.link) {
-                        respuesta += `🔗 *enlace:* ${tramite.link}\n`;
-                    }
-                    if (tramite.formato) {
-                        respuesta += `📄 *formato:* ${tramite.formato}\n`;
-                    }
-                    respuesta += `💵 *costo:* ${tramite.costo}\n` +
-                                 `🕒 *horario:* ${tramite.horario}`;
-                } else {
-                    respuesta = `⚠️ no se encontro ningun tramite con el id *${idbuscado}*. por favor verifica e intenta de nuevo.`;
-                }
-
-            } else if (texto.toLowerCase() === "menu" || texto.toLowerCase() === "menú") {
-                // si el usuario pide el menu, consultamos todos los departamentos
-                const deptos = await db.all('SELECT * FROM departamentos');
-                respuesta = "departamentos disponibles usae-jr:\n\n";
-                
-                // recorre cada departamento y sus respectivos tramites para armar el submenu
-                for (const d of deptos) {
-                    respuesta += `${d.nombre}\n`;
-                    const tramitesdepto = await db.all('SELECT id, nombre FROM tramites WHERE departamento_id = ?', [d.id]);
-                    for (const t of tramitesdepto) {
-                        respuesta += `  └ [${t.id}] ${t.nombre}\n`;
-                    }
-                    respuesta += "\n";
-                }
-                respuesta += "responde con el numero (id) del tramite que deseas consultar.";
-
-            } else {
-                // mensaje de bienvenida por defecto si escribe cualquier otra cosa
-                respuesta = "¡Hola! Bienvenido al sistema de consultas automatizado de la USAE Juventino Rosas.\n\n" +
-                             "Para comenzar y ver la lista completa de trámites disponibles por departamentos, escribe la palabra MENU.";
-            }
-
-            // enviamos la respuesta generada de regreso al usuario por whatsapp de forma dinamica
+            guardarMensaje(remitente, 'usuario', texto, 'whatsapp');
+            const respuesta = generarRespuesta(texto);
+            guardarMensaje(remitente, 'bot', respuesta, 'whatsapp');
             await enviarmensajewhatsapp(remitente, respuesta);
         }
 
-        // respondemos a meta que el mensaje fue procesado correctamente (evita el error 400 en webhook)
         res.sendStatus(200);
     } else {
         res.sendStatus(404);
@@ -158,6 +317,7 @@ app.get('/demo', (req, res) => {
         <html lang="es">
         <head>
             <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Simulador Chatbot USAE Juventino Rosas</title>
             <style>
                 body { font-family: Arial, sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
@@ -170,9 +330,12 @@ app.get('/demo', (req, res) => {
                 .chat-input { display: flex; padding: 10px; background: #f0f2f5; border-top: 1px solid #ddd; }
                 .chat-input input { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; outline: none; }
                 .chat-input button { background: #075e54; color: white; border: none; padding: 10px 15px; margin-left: 5px; border-radius: 4px; cursor: pointer; }
+                .top { position: fixed; top: 16px; left: 16px; }
+                .top a { color: #075e54; font-weight: bold; text-decoration: none; background: white; padding: 8px 12px; border-radius: 8px; }
             </style>
         </head>
         <body>
+            <div class="top"><a href="/">← Panel de configuración</a></div>
             <div class="chat-container">
                 <div class="chat-header">Bot USAE Juventino Rosas (Simulador)</div>
                 <div class="chat-messages" id="chatBox">
@@ -191,12 +354,10 @@ app.get('/demo', (req, res) => {
                     const texto = input.value.trim();
                     if(!texto) return;
 
-                    // Mostrar mensaje del usuario
                     chatBox.innerHTML += \`<div class="message user">\${texto}</div>\`;
                     input.value = '';
                     chatBox.scrollTop = chatBox.scrollHeight;
 
-                    // Enviar al servidor local simulando el webhook
                     const response = await fetch('/api-simular', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -204,7 +365,6 @@ app.get('/demo', (req, res) => {
                     });
                     const data = await response.json();
 
-                    // Mostrar respuesta del bot
                     chatBox.innerHTML += \`<div class="message bot">\${data.respuesta.replace(/\\n/g, '<br>')}</div>\`;
                     chatBox.scrollTop = chatBox.scrollHeight;
                 }
@@ -214,49 +374,29 @@ app.get('/demo', (req, res) => {
     `);
 });
 
-// Endpoint auxiliar para procesar la prueba visual sin involucrar a Meta
-app.post('/api-simular', async (req, res) => {
-    const { texto } = req.body;
-    let respuesta = "";
-    const idbuscado = parseInt(texto);
+app.post('/api-simular', (req, res) => {
+    const texto = String(req.body?.texto || '').trim();
+    const telefonoDemo = 'demo-local';
 
-    if (!isNaN(idbuscado)) {
-        const tramite = await db.get(`
-            SELECT t.*, d.nombre AS departamento, d.horario 
-            FROM tramites t 
-            JOIN departamentos d ON t.departamento_id = d.id 
-            WHERE t.id = ?
-        `, [idbuscado]);
-
-        if (tramite) {
-            respuesta = `📋 ${tramite.nombre}\n\n` +
-                        `🏢 departamento: ${tramite.departamento}\n` +
-                        `📌 requisitos:\n${tramite.requisitos}\n\n`;
-            if (tramite.link) respuesta += `🔗 enlace: ${tramite.link}\n`;
-            if (tramite.formato) respuesta += `📄 formato: ${tramite.formato}\n`;
-            respuesta += `💵 costo: ${tramite.costo}\n🕒 horario: ${tramite.horario}`;
-        } else {
-            respuesta = `⚠️ No se encontró ningún trámite con el ID ${idbuscado}.`;
-        }
-    } else if (texto.toLowerCase() === "menu" || texto.toLowerCase() === "menú") {
-        const deptos = await db.all('SELECT * FROM departamentos');
-        respuesta = "Departamentos disponibles USAE-JR:\n\n";
-        for (const d of deptos) {
-            respuesta += `${d.nombre}\n`;
-            const tramitesdepto = await db.all('SELECT id, nombre FROM tramites WHERE departamento_id = ?', [d.id]);
-            for (const t of tramitesdepto) {
-                respuesta += `  └ [${t.id}] ${t.nombre}\n`;
-            }
-            respuesta += "\n";
-        }
-    } else {
-        respuesta = "¡Hola! Bienvenido al sistema de consultas automatizado de la USAE Juventino Rosas.\n\nEscribe MENU.";
+    if (!texto) {
+        return res.status(400).json({ error: 'texto requerido' });
     }
+
+    guardarMensaje(telefonoDemo, 'usuario', texto, 'demo');
+    const respuesta = generarRespuesta(texto);
+    guardarMensaje(telefonoDemo, 'bot', respuesta, 'demo');
 
     res.json({ respuesta });
 });
 
+const cfgInicial = obtenerConfig();
+const puerto = cfgInicial.puerto || 3000;
 
-
-// el servidor local en el puerto 3000
-app.listen(3000, () => console.log('servidor corriendo en el puerto 3000'))
+app.listen(puerto, () => {
+    console.log(`servidor corriendo en http://localhost:${puerto}`);
+    console.log(`panel de configuración: http://localhost:${puerto}/`);
+    console.log(`simulador: http://localhost:${puerto}/demo`);
+    if (!configLista(cfgInicial)) {
+        console.log('aviso: configura el token permanente desde el panel web');
+    }
+});
