@@ -127,7 +127,7 @@ app.post('/webhook', async (req, res) => {
     }
 });
 
-// funcion auxiliar para enviar mensajes de texto mediante la api cloud de meta (actualizada a v26.0)
+// Función oficial para enviar mensajes a través de la API Cloud de Meta
 async function enviarmensajewhatsapp(destinatario, texto) {
     try {
         await axios.post(
@@ -145,8 +145,9 @@ async function enviarmensajewhatsapp(destinatario, texto) {
                 }
             }
         );
+        console.log("Mensaje enviado con éxito a Meta para el usuario:", destinatario);
     } catch (error) {
-        console.error("Error al enviar mensaje con Axios:", error.response?.data || error.message);
+        console.error("Error al enviar mensaje con Axios a Meta:", error.response?.data || error.message);
     }
 }
 
